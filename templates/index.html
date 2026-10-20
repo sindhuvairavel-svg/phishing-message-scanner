@@ -3,193 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHISHSHIFT MESSAGE RISK SCANNER - Advanced Dashboard</title>
+    <title>PhishShift - Enterprise Threat Intelligence Platform</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-color: #0b1126;
-            --panel-bg: #121c3b;
-            --text-color: #d8e0f1;
-            --text-muted: #8d9bb0;
-            --accent-primary: #0cc5cf;
-            --accent-orange: #ff9f43;
-            --accent-red: #ea5455;
-            --accent-purple: #9b59b6;
-            --border-color: #2b3a62;
-            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --bg-color: #080c1f;
+            --sidebar-bg: #0d132c;
+            --panel-bg: #101735;
+            --text-color: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-green: #10b981;
+            --border-color: #1e293b;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: var(--font-family);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            grid-template-rows: 80px 1fr 1fr;
-            grid-template-areas: 
-                "header header"
-                "input-panel graph-main"
-                "input-panel detail-panel";
-            gap: 20px;
-            width: 100%;
-            max-width: 1400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border-color);
-            padding: 20px;
-        }
-
-        /* --- Header --- */
-        .dashboard-header {
-            grid-area: header;
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .title-group {
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
-            flex-grow: 1;
-        }
-
-        .main-title {
-            color: var(--accent-primary);
-            font-size: 28px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            margin: 0;
-        }
-
-        .main-subtitle {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin: 0;
-            letter-spacing: 1px;
-        }
-
-        .header-tags {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .header-tag {
-            background-color: var(--border-color);
-            color: var(--accent-primary);
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        /* --- Panels --- */
-        .dashboard-panel {
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
             padding: 20px;
             box-sizing: border-box;
         }
 
-        .panel-title {
-            color: var(--text-color);
-            font-size: 16px;
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .brand-logo {
+            background-color: var(--accent-cyan);
+            color: var(--bg-color);
             font-weight: bold;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-
-        /* --- Left Input Panel --- */
-        .input-panel {
-            grid-area: input-panel;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            color: var(--text-muted);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-        }
-
-        select, input, textarea {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 12px;
+            padding: 8px 12px;
             border-radius: 6px;
-            font-family: inherit;
             font-size: 14px;
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 250px;
-        }
-
-        select:focus, input:focus, textarea:focus {
-            outline: 2px solid var(--accent-primary);
-        }
-
-        .submit-btn {
-            background-color: var(--bg-color);
-            color: var(--accent-primary);
-            border: 1px solid var(--accent-primary);
-            padding: 15px;
-            border-radius: 6px;
+        .brand-title {
+            font-size: 16px;
             font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            letter-spacing: 1px;
-            margin-top: 10px;
+            color: var(--text-color);
         }
 
-        .submit-btn:hover {
-            background-color: rgba(12, 197, 207, 0.1);
+        .brand-subtitle {
+            font-size: 10px;
+            color: var(--accent-cyan);
         }
 
-        /* --- Main Graph --- */
-        .graph-main {
-            grid-area: graph-main;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* --- Detail Panel --- */
-        .detail-panel {
-            grid-area: detail-panel;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .result-list {
+        .nav-menu {
             list-style: none;
             padding: 0;
             margin: 0;
@@ -198,170 +76,358 @@
             gap: 10px;
         }
 
-        .result-item {
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .nav-item a:hover, .nav-item a.active {
+            background-color: var(--panel-bg);
+            color: var(--accent-cyan);
+            border-left: 4px solid var(--accent-cyan);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 25px;
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .top-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--text-color);
+        }
+
+        .download-btn {
+            background-color: var(--accent-cyan);
+            color: var(--bg-color);
+            padding: 8px 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        select, textarea {
+            width: 100%;
             background-color: var(--bg-color);
+            color: var(--text-color);
             border: 1px solid var(--border-color);
             padding: 10px;
             border-radius: 6px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .result-item.safe { border-left: 3px solid #4caf50; }
-        .result-item.suspicious { border-left: 3px solid #ff9f43; }
-        .result-item.dangerous { border-left: 3px solid #ea5455; }
-
-        .result-icon {
-            font-size: 18px;
-            color: var(--accent-primary);
-        }
-
-        .result-text {
-            color: var(--text-color);
+            font-family: inherit;
+            box-sizing: border-box;
             font-size: 13px;
         }
 
+        textarea {
+            resize: vertical;
+            min-height: 130px;
+        }
+
+        button.submit-btn {
+            width: 100%;
+            background-color: var(--accent-cyan);
+            color: var(--bg-color);
+            border: none;
+            padding: 11px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 13px;
+        }
+
+        .charts-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chart-box {
+            position: relative;
+            height: 190px;
+            width: 100%;
+        }
+
+        .results-box {
+            margin-top: 15px;
+            background-color: var(--bg-color);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 12px;
+        }
+
+        /* History Table Panel */
+        .history-panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
 
-    <div class="dashboard-container">
-        
-        <!-- Header -->
-        <header class="dashboard-header">
-            <div class="header-tags">
-                <div class="header-tag">🤖 STATUS: ACTIVE</div>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-logo">🛡️</div>
+            <div>
+                <div class="brand-title">PhishShift</div>
+                <div class="brand-subtitle">Enterprise XAI Suite</div>
             </div>
-            <div class="title-group">
-                <h1 class="main-title">PHISHSHIFT MESSAGE RISK SCANNER</h1>
-                <p class="main-subtitle">ADVANCED CAMPAIGN-SEPARATED GENERALIZATION & THREAT ANALYSIS SUITE</p>
-            </div>
-            <div class="header-tags">
-                <div class="header-tag">CYBERSECURITY NLP & ROBUSTNESS TRIAGE (ML-07)</div>
-            </div>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="#" class="active">📊 Dashboard</a></li>
+            <li class="nav-item"><a href="#">💬 Threat Scanner</a></li>
+            <li class="nav-item"><a href="#">🕒 Scan History Log</a></li>
+            <li class="nav-item"><a href="#">🧠 XAI & Model Insights</a></li>
+            <li class="nav-item"><a href="#">⚙️ API & Settings</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <header class="top-header">
+            <h2>Real-time Threat Triage & SHAP Explainability</h2>
+            <a href="/download_csv" class="download-btn">📥 Download Audit CSV</a>
         </header>
 
-        <!-- Left Input Panel -->
-        <aside class="dashboard-panel input-panel">
-            <div class="panel-title">SCAN SETTINGS</div>
-            <form id="scanForm">
-                <div class="form-group">
-                    <label for="channel">Target Channel</label>
-                    <select id="channel">
-                        <option value="corporate">Corporate Email Simulation</option>
-                        <option value="sms">SMS Phishing Test</option>
-                        <option value="social">Social Engineering Sim</option>
-                    </select>
+        <div class="dashboard-grid">
+            <!-- Input Form -->
+            <div class="panel">
+                <div class="panel-title">Message Vector Input</div>
+                <form id="scanForm">
+                    <div class="form-group">
+                        <label>Attack Vector Channel</label>
+                        <select id="channel">
+                            <option>Corporate Email Phishing</option>
+                            <option>SMS Smishing Alert</option>
+                            <option>Social Engineering</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Suspicious Message Content</label>
+                        <textarea id="messageInput" placeholder="Paste email/SMS body here..."></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Execute Threat Scan</button>
+                </form>
+
+                <div class="results-box" id="resultOutput">
+                    <strong>Status:</strong> Awaiting incoming message telemetry...
                 </div>
-
-                <div class="form-group">
-                    <label for="subject">Subject / Reference Title</label>
-                    <input type="text" id="subject" placeholder="e.g., Urgent Security Credentials Update Required">
-                </div>
-
-                <div class="form-group">
-                    <label for="message">Message Body & Defanged URL Data</label>
-                    <textarea id="message" placeholder="Paste incoming simulated message body here... (URLs will be automatically defanged and analyzed)"></textarea>
-                </div>
-
-                <button type="submit" class="submit-btn">RUN COMPREHENSIVE SCAN</button>
-            </form>
-        </aside>
-
-        <!-- Main Graph Panel -->
-        <main class="dashboard-panel graph-main">
-            <div class="panel-title">PHISHING INDICATOR BREAKDOWN (NLP FEATURES)</div>
-            <div style="flex-grow: 1; position: relative;">
-                <canvas id="nlpChart"></canvas>
             </div>
-        </main>
 
-        <!-- Details & Findings Panel -->
-        <section class="dashboard-panel detail-panel">
-            <div class="panel-title">DETAILED ANALYSIS & FINDINGS</div>
-            <ul class="result-list">
-                <li class="result-item suspicious">
-                    <span class="result-icon">🔗</span>
-                    <span class="result-text">URL Reputation: SUSPICIOUS</span>
-                </li>
-                <li class="result-item safe">
-                    <span class="result-icon">🔍</span>
-                    <span class="result-text">Keyword Check: (Clean)</span>
-                </li>
-                <li class="result-item dangerous">
-                    <span class="result-icon">⚠️</span>
-                    <span class="result-text">Impersonation Attempt: HIGH PROBABILITY</span>
-                </li>
-            </ul>
-        </section>
+            <!-- Charts Panel -->
+            <div class="panel charts-wrapper">
+                <div class="panel-title">SHAP / LIME Feature Attribution</div>
+                <div class="chart-box">
+                    <canvas id="nlpBarChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <canvas id="riskDoughnutChart"></canvas>
+                </div>
+            </div>
+        </div>
 
-    </div>
+        <!-- History Table Log -->
+        <div class="history-panel">
+            <div class="panel-title">Recent Threat Scan History (SQLite Log)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Channel</th>
+                        <th>Message Preview</th>
+                        <th>Risk Score</th>
+                        <th>Verdict Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
 
     <script>
-        // Chart.js Configuration for NLP Feature Chart
-        const ctx = document.getElementById('nlpChart').getContext('2d');
-        const nlpChart = new Chart(ctx, {
+        // Charts Init
+        const barCtx = document.getElementById('nlpBarChart').getContext('2d');
+        const nlpBarChart = new Chart(barCtx, {
             type: 'bar',
             data: {
-                labels: ['URGENCY', 'THREAT', 'IMPERSONATION', 'ENTICEMENT', 'CONCEPTUAL RELEVANCE', 'DECEPTION', 'SPEAR PHISHING'],
+                labels: ['Urgency', 'Threat', 'Impersonation', 'Enticement', 'Deception'],
                 datasets: [{
-                    label: 'NLP Feature Relevance (%)',
-                    data: [75, 60, 50, 40, 35, 30, 25],
-                    backgroundColor: [
-                        '#ff9f43', // URGENCY
-                        '#ea5455', // THREAT
-                        '#9b59b6', // IMPERSONATION
-                        '#e84393', // ENTICEMENT
-                        '#00cec9', // CONCEPTUAL
-                        '#badc58', // DECEPTION
-                        '#b2bec3'  // SPEAR
-                    ],
-                    borderColor: var('--border-color'),
-                    borderWidth: 1,
-                    borderRadius: 5
+                    label: 'Feature Weight (%)',
+                    data: [30, 45, 25, 20, 35],
+                    backgroundColor: ['#f59e0b', '#ef4444', '#06b6d4', '#10b981', '#8b5cf6'],
+                    borderRadius: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            color: '#8d9bb0'
-                        },
-                        grid: {
-                            color: '#2b3a62'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            color: '#d8e0f1'
-                        },
-                        grid: {
-                            display: false
-                        }
-                    }
+                    y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                    x: { ticks: { color: '#e2e8f0' }, grid: { display: false } }
                 },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
+                plugins: { legend: { display: false } }
             }
         });
 
-        // Placeholder logic to update chart data after a form submit (to be connected to Flask)
-        document.getElementById('scanForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // In a real app, send data via fetch, get new NLP scores, and then update the chart:
-            // nlpChart.data.datasets[0].data = [newUrgency, newThreat, ...];
-            // nlpChart.update();
-            alert('Scan triggered! (This is a conceptual demo - connect it to your Flask backend)');
+        const pieCtx = document.getElementById('riskDoughnutChart').getContext('2d');
+        const riskDoughnutChart = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Safe', 'Suspicious', 'Malicious'],
+                datasets: [{
+                    data: [20, 40, 40],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } }
+            }
         });
 
+        // Load History Function
+        async function loadHistory() {
+            try {
+                const res = await fetch('/history');
+                const data = await res.json();
+                const tbody = document.getElementById('historyTableBody');
+                tbody.innerHTML = '';
+                if(data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No scan logs found.</td></tr>`;
+                    return;
+                }
+                data.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${row.timestamp}</td>
+                            <td>${row.channel}</td>
+                            <td>${row.message}</td>
+                            <td><strong>${row.risk_score}%</strong></td>
+                            <td><span style="color:var(--accent-red)">${row.status}</span></td>
+                        </tr>
+                    `;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        loadHistory();
+
+        // Form Submit
+        document.getElementById('scanForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const message = document.getElementById('messageInput').value;
+            const channel = document.getElementById('channel').value;
+
+            const res = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message, channel })
+            });
+
+            const data = await res.json();
+            if(res.ok) {
+                document.getElementById('resultOutput').innerHTML = `<strong>Result:</strong> Risk Score: ${data.risk_score}% | Status: <span style="color:var(--accent-red)">${data.prediction}</span>`;
+                
+                nlpBarChart.data.datasets[0].data = [
+                    data.metrics.urgency,
+                    data.metrics.threat,
+                    data.metrics.impersonation,
+                    data.metrics.enticement,
+                    data.metrics.deception
+                ];
+                nlpBarChart.update();
+                loadHistory();
+            } else {
+                document.getElementById('resultOutput').innerHTML = `<span style="color:var(--accent-red)">Error: ${data.error}</span>`;
+            }
+        });
     </script>
 </body>
 </html>
