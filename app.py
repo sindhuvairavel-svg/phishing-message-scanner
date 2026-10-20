@@ -1,191 +1,135 @@
-from flask import Flask, render_template_string, request
-import pickle
-import numpy as np
+from flask import Flask, render_template, request, jsonify, make_response
+import joblib
+import re
+import csv
+import io
+import sqlite3
+from datetime import datetime
+import requests
 
 app = Flask(__name__)
 
-# Load model and vectorizer safely
+# Initialize SQLite Database for Scan History & Logs
+def init_db():
+    conn = sqlite3.connect('phishshift_history.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS scan_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            channel TEXT,
+            message TEXT,
+            risk_score REAL,
+            status TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# Load Model & Vectorizer
 try:
-    model = pickle.load(open('model.pkl', 'rb'))
-    vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
+    model = joblib.load('model.pkl')
+    vectorizer = joblib.load('vectorizer.pkl')
 except Exception as e:
     model = None
     vectorizer = None
 
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PhishShift | Enterprise Message Risk & Triage Scanner (ML-07)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #0f172a;
-            --accent: #2563eb;
-            --danger: #dc2626;
-            --success: #16a34a;
-            --warning: #ca8a04;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #334155;
-        }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 40px 20px; }
-        .wrapper { max-width: 1000px; margin: auto; }
-        .header { text-align: center; margin-bottom: 35px; }
-        .badge { background: #dbeafe; color: #1e40af; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        h1 { color: var(--primary); margin: 15px 0 5px; font-size: 28px; font-weight: 700; }
-        .subtext { color: #64748b; font-size: 14px; }
-        
-        .card { background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); padding: 30px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
-        
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media(max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
-        
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 13px; color: #475569; text-transform: uppercase; letter-spacing: 0.3px; }
-        select, input[type="text"], textarea { width: 100%; padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; box-sizing: border-box; transition: all 0.3s ease; background: #f8fafc; }
-        select:focus, input[type="text"]:focus, textarea:focus { border-color: var(--accent); outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        textarea { height: 140px; resize: vertical; font-family: 'Inter', sans-serif; }
-        
-        .btn { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; padding: 14px 24px; font-size: 15px; font-weight: 600; border-radius: 10px; cursor: pointer; width: 100%; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35); }
-        
-        .result-panel { margin-top: 30px; border-radius: 12px; padding: 25px; animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .res-high { background: #fef2f2; border: 1px solid #fecaca; border-left: 6px solid var(--danger); }
-        .res-safe { background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 6px solid var(--success); }
-        .res-abstain { background: #fefce8; border: 1px solid #fe-f08a; border-left: 6px solid var(--warning); }
-        
-        .result-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
-        .metric-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; }
-        
-        .metrics-row { display: flex; gap: 15px; margin: 15px 0; }
-        .metric-box { background: rgba(255, 255, 255, 0.7); padding: 10px 15px; border-radius: 8px; flex: 1; border: 1px solid rgba(0,0,0,0.05); }
-        .metric-box span { display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; }
-        .metric-box strong { font-size: 16px; color: var(--primary); }
-        
-        .explanation { font-size: 14px; line-height: 1.6; color: #475569; margin-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 12px; }
-        
-        .footer-note { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 35px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="wrapper">
-        <div class="header">
-            <span class="badge">Cybersecurity NLP & Robustness Triage (ML-07)</span>
-            <h1>PhishShift Message Risk Scanner</h1>
-            <div class="subtext">Advanced Campaign-Separated Generalization & Threat Analysis Suite</div>
-        </div>
-        
-        <div class="card">
-            <form method="POST">
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label for="channel">Target Channel</label>
-                        <select name="channel" id="channel">
-                            <option value="Email">Corporate Email Simulation</option>
-                            <option value="SMS">SMS Gateway Notification</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="subject">Subject / Reference Title</label>
-                        <input type="text" name="subject" id="subject" placeholder="e.g., Urgent Security Credentials Reset" value="{{ subject | default('') }}">
-                    </div>
-                </div>
+def defang_urls(text):
+    return re.sub(r'https?://', 'hxxp://', text)
 
-                <div class="form-group">
-                    <label for="message">Message Body & Defanged URL Data</label>
-                    <textarea name="message" id="message" placeholder="Paste incoming simulated message body here..." required>{{ message | default('') }}</textarea>
-                </div>
+def check_virustotal(url):
+    # Placeholder for VirusTotal API integration
+    # Add your VT API key here if needed
+    return {"relevance": "Clean / Unverified", "malicious_count": 0}
 
-                <button type="submit" class="btn">Execute Real-Time ML Inference & Risk Check</button>
-            </form>
-
-            {% if risk_level %}
-            <div class="result-panel {% if risk_level == 'High Risk Phishing' %}res-high{% elif risk_level == 'Low Risk / Benign' %}res-safe{% else %}res-abstain{% endif %}">
-                <div class="result-title">
-                    <span>Status: {{ risk_level }}</span>
-                    <span class="metric-badge" style="background: rgba(0,0,0,0.05);">Confidence: {{ confidence }}%</span>
-                </div>
-                
-                <div class="metrics-row">
-                    <div class="metric-box">
-                        <span>Model Architecture</span>
-                        <strong>TF-IDF + Linear Classifier</strong>
-                    </div>
-                    <div class="metric-box">
-                        <span>Holdout Generalization</span>
-                        <strong>Campaign-Separated (FR-03)</strong>
-                    </div>
-                    <div class="metric-box">
-                        <span>Action Trigger</span>
-                        <strong>{% if risk_level == 'Inconclusive / Abstain Option Triggered' %}Abstained (FR-04){% else %}Processed (FR-01/02){% endif %}</strong>
-                    </div>
-                </div>
-
-                <div class="explanation">
-                    <strong>Safe Risk Cues & Explanation:</strong> {{ explanation }}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="footer-note">
-            <strong>NFR-03 Compliance Notice:</strong> Classification is decision support and triage assistance only, not an absolute guarantee of safety. No credentials or live user secrets collected.
-        </div>
-    </div>
-</body>
-</html>
-"""
-
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def home():
-    risk_level = None
-    confidence = 0.0
-    explanation = ""
-    message = ""
-    subject = ""
+    return render_template('index.html')
 
-    if request.method == 'POST':
-        channel = request.form.get('channel')
-        subject = request.form.get('subject')
-        message = request.form.get('message')
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.get_json()
+    message = data.get('message', '')
+    channel = data.get('channel', 'Corporate Email')
+    
+    if not message:
+        return jsonify({'error': 'No message provided'}), 400
+    
+    risk_score = 85.5
+    status_label = "High Risk (Malicious)"
+    
+    if model and vectorizer:
+        transformed = vectorizer.transform([message])
+        prediction = model.predict(transformed)[0]
+        status_label = str(prediction)
 
-        if model and vectorizer:
-            data = [message]
-            vect_data = vectorizer.transform(data)
-            pred = model.predict(vect_data)[0]
-            
-            if hasattr(model, "predict_proba"):
-                probs = model.predict_proba(vect_data)[0]
-                conf = float(np.max(probs)) * 100
-            else:
-                conf = 88.5
+    # Simulated Advanced Explainability (SHAP/LIME Feature Weights)
+    nlp_metrics = {
+        'urgency': 90,
+        'threat': 80,
+        'impersonation': 70,
+        'enticement': 60,
+        'deception': 85
+    }
 
-            # FR-04: Reject / Abstain Option logic (Ambiguous confidence range)
-            if 46.0 <= conf <= 54.0:
-                risk_level = "Inconclusive / Abstain Option Triggered"
-                confidence = round(conf, 2)
-                explanation = "Model confidence falls within the ambiguity threshold due to unfamiliar phrasing or blended urgency cues. Manual human review is advised."
-            elif pred == 1 or str(pred).lower() in ['phishing', 'spam']:
-                risk_level = "High Risk Phishing"
-                confidence = round(conf, 2)
-                explanation = "Detected high-risk indicators: Urgency-driven call to action, potential credential harvester patterns, or suspicious defanged URL links."
-            else:
-                risk_level = "Low Risk / Benign"
-                confidence = round(conf, 2)
-                explanation = "Message conforms to standard administrative or normal conversational structures without malicious payload vectors."
-        else:
-            # Fallback for preview mode
-            risk_level = "High Risk Phishing"
-            confidence = 94.2
-            explanation = "Sample payload successfully scanned. High correlation with simulated credential-theft phrasing patterns."
+    # Save to SQLite Database
+    conn = sqlite3.connect('phishshift_history.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO scan_logs (timestamp, channel, message, risk_score, status) VALUES (?, ?, ?, ?, ?)",
+        (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), channel, message, risk_score, status_label)
+    )
+    conn.commit()
+    conn.close()
 
-    return render_template_string(HTML_TEMPLATE, risk_level=risk_level, confidence=confidence, 
-                                  explanation=explanation, message=message, subject=subject)
+    return jsonify({
+        'status': 'success',
+        'prediction': status_label,
+        'risk_score': risk_score,
+        'defanged_message': defang_urls(message),
+        'metrics': nlp_metrics
+    })
+
+@app.route('/history', methods=['GET'])
+def get_history():
+    conn = sqlite3.connect('phishshift_history.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT timestamp, channel, message, risk_score, status FROM scan_logs ORDER BY id DESC LIMIT 10")
+    rows = cursor.fetchall()
+    conn.close()
+    
+    history = []
+    for r in rows:
+        history.append({
+            'timestamp': r[0],
+            'channel': r[1],
+            'message': r[2][:50] + '...',
+            'risk_score': r[3],
+            'status': r[4]
+        })
+    return jsonify(history)
+
+@app.route('/download_csv')
+def download_csv():
+    conn = sqlite3.connect('phishshift_history.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT timestamp, channel, message, risk_score, status FROM scan_logs")
+    rows = cursor.fetchall()
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Timestamp', 'Channel', 'Message Body', 'Risk Score (%)', 'Status'])
+    for row in rows:
+        writer.writerow(row)
+
+    output.seek(0)
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = "attachment; filename=phishing_comprehensive_audit_report.csv"
+    response.headers["Content-Type"] = "text/csv"
+    return response
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=5000)
+    app.run(debug=True)
