@@ -1,1 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHISHSHIFT MESSAGE RISK SCANNER - Advanced Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b1126;
+            --panel-bg: #121c3b;
+            --text-color: #d8e0f1;
+            --text-muted: #8d9bb0;
+            --accent-primary: #0cc5cf;
+            --accent-orange: #ff9f43;
+            --accent-red: #ea5455;
+            --accent-purple: #9b59b6;
+            --border-color: #2b3a62;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            grid-template-rows: 80px 1fr 1fr;
+            grid-template-areas: 
+                "header header"
+                "input-panel graph-main"
+                "input-panel detail-panel";
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+        }
+
+        /* --- Header --- */
+        .dashboard-header {
+            grid-area: header;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .main-title {
+            color: var(--accent-primary);
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+
+        .main-subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .header-tags {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .header-tag {
+            background-color: var(--border-color);
+            color: var(--accent-primary);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* --- Panels --- */
+        .dashboard-panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .panel-title {
+            color: var(--text-color);
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        /* --- Left Input Panel --- */
+        .input-panel {
+            grid-area: input-panel;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        select, input, textarea {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 250px;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: 2px solid var(--accent-primary);
+        }
+
+        .submit-btn {
+            background-color: var(--bg-color);
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: rgba(12, 197, 207, 0.1);
+        }
+
+        /* --- Main Graph --- */
+        .graph-main {
+            grid-area: graph-main;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Detail Panel --- */
+        .detail-panel {
+            grid-area: detail-panel;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .result-item {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .result-item.safe { border-left: 3px solid #4caf50; }
+        .result-item.suspicious { border-left: 3px solid #ff9f43; }
+        .result-item.dangerous { border-left: 3px solid #ea5455; }
+
+        .result-icon {
+            font-size: 18px;
+            color: var(--accent-primary);
+        }
+
+        .result-text {
+            color: var(--text-color);
+            font-size: 13px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-tags">
+                <div class="header-tag">🤖 STATUS: ACTIVE</div>
+            </div>
+            <div class="title-group">
+                <h1 class="main-title">PHISHSHIFT MESSAGE RISK SCANNER</h1>
+                <p class="main-subtitle">ADVANCED CAMPAIGN-SEPARATED GENERALIZATION & THREAT ANALYSIS SUITE</p>
+            </div>
+            <div class="header-tags">
+                <div class="header-tag">CYBERSECURITY NLP & ROBUSTNESS TRIAGE (ML-07)</div>
+            </div>
+        </header>
+
+        <!-- Left Input Panel -->
+        <aside class="dashboard-panel input-panel">
+            <div class="panel-title">SCAN SETTINGS</div>
+            <form id="scanForm">
+                <div class="form-group">
+                    <label for="channel">Target Channel</label>
+                    <select id="channel">
+                        <option value="corporate">Corporate Email Simulation</option>
+                        <option value="sms">SMS Phishing Test</option>
+                        <option value="social">Social Engineering Sim</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Subject / Reference Title</label>
+                    <input type="text" id="subject" placeholder="e.g., Urgent Security Credentials Update Required">
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message Body & Defanged URL Data</label>
+                    <textarea id="message" placeholder="Paste incoming simulated message body here... (URLs will be automatically defanged and analyzed)"></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">RUN COMPREHENSIVE SCAN</button>
+            </form>
+        </aside>
+
+        <!-- Main Graph Panel -->
+        <main class="dashboard-panel graph-main">
+            <div class="panel-title">PHISHING INDICATOR BREAKDOWN (NLP FEATURES)</div>
+            <div style="flex-grow: 1; position: relative;">
+                <canvas id="nlpChart"></canvas>
+            </div>
+        </main>
+
+        <!-- Details & Findings Panel -->
+        <section class="dashboard-panel detail-panel">
+            <div class="panel-title">DETAILED ANALYSIS & FINDINGS</div>
+            <ul class="result-list">
+                <li class="result-item suspicious">
+                    <span class="result-icon">🔗</span>
+                    <span class="result-text">URL Reputation: SUSPICIOUS</span>
+                </li>
+                <li class="result-item safe">
+                    <span class="result-icon">🔍</span>
+                    <span class="result-text">Keyword Check: (Clean)</span>
+                </li>
+                <li class="result-item dangerous">
+                    <span class="result-icon">⚠️</span>
+                    <span class="result-text">Impersonation Attempt: HIGH PROBABILITY</span>
+                </li>
+            </ul>
+        </section>
+
+    </div>
+
+    <script>
+        // Chart.js Configuration for NLP Feature Chart
+        const ctx = document.getElementById('nlpChart').getContext('2d');
+        const nlpChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['URGENCY', 'THREAT', 'IMPERSONATION', 'ENTICEMENT', 'CONCEPTUAL RELEVANCE', 'DECEPTION', 'SPEAR PHISHING'],
+                datasets: [{
+                    label: 'NLP Feature Relevance (%)',
+                    data: [75, 60, 50, 40, 35, 30, 25],
+                    backgroundColor: [
+                        '#ff9f43', // URGENCY
+                        '#ea5455', // THREAT
+                        '#9b59b6', // IMPERSONATION
+                        '#e84393', // ENTICEMENT
+                        '#00cec9', // CONCEPTUAL
+                        '#badc58', // DECEPTION
+                        '#b2bec3'  // SPEAR
+                    ],
+                    borderColor: var('--border-color'),
+                    borderWidth: 1,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            color: '#8d9bb0'
+                        },
+                        grid: {
+                            color: '#2b3a62'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#d8e0f1'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Placeholder logic to update chart data after a form submit (to be connected to Flask)
+        document.getElementById('scanForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // In a real app, send data via fetch, get new NLP scores, and then update the chart:
+            // nlpChart.data.datasets[0].data = [newUrgency, newThreat, ...];
+            // nlpChart.update();
+            alert('Scan triggered! (This is a conceptual demo - connect it to your Flask backend)');
+        });
+
+    </script>
+</body>
+</html>
