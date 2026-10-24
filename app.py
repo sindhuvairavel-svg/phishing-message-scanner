@@ -1,10 +1,10 @@
-from flask import Flask, request, jsonify
+from flask import Flask, rendor_template, request, jsonify
 
 app = Flask(__name__)  # This initialization is required
 
 @app.route('/')
 def home():
-    return "Phishing Message Scanner API is Live!"
+    return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
