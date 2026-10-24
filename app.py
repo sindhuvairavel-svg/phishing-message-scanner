@@ -1,3 +1,7 @@
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)  # This initialization is required
+
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
