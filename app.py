@@ -2,6 +2,10 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)  # This initialization is required
 
+@app.route('/')
+def home():
+    return "Phishing Message Scanner API is Live!"
+
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
